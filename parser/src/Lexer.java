@@ -201,6 +201,7 @@ public class Lexer {
                         int H_count = 0;
                         int T_count = 0;
                         int E_count = 0;
+                        int Oper_count = 0;
 
                         while (Character.isDigit(c) || Character.isAlphabetic(c) || c == '.' || c == '+' || c == '-' || c == 'e') {
                             char currentChar = (char) c;
@@ -219,8 +220,7 @@ public class Lexer {
                                 O_count++;
                             }
 
-                            if ((currentChar < '0' || currentChar > '9') &&
-                                    (currentChar != 'd' && currentChar != 'D')) {
+                            if ((currentChar < '0' || currentChar > '9') && currentChar != 'D' && currentChar != 'd') {
                                 isDec = false;
                             } else if (currentChar == 'd' || currentChar == 'D') {
                                 D_count++;
@@ -237,8 +237,11 @@ public class Lexer {
                                 isOrd = true;
                                 T_count++;
                             }
-                            if (currentChar == 'e') {
+                            if (currentChar == 'e' || currentChar == 'E') {
                                 E_count++;
+                            }
+                            if (currentChar == '+' || currentChar == '-') {
+                                Oper_count++;
                             }
                             buf.append(currentChar);
                             c = reader.read();
@@ -255,8 +258,7 @@ public class Lexer {
                             addToken(new Token(TokenType.NUM, numStr));
                         }
                         else if (isDec && (!numStr.startsWith("D") && !numStr.startsWith("d")) &&
-                                (numStr.endsWith("D") || numStr.endsWith("d")) &&
-                                (D_count == 1)) {
+                                (D_count == 1 || D_count == 0)) {
                             addToken(new Token(TokenType.NUM, numStr));
                         }
                         else if (isHex && (!numStr.startsWith("h") && !numStr.startsWith("H")) &&
@@ -267,14 +269,18 @@ public class Lexer {
                         else {
                             boolean isValid = true;
                             for (char x : numStr.toCharArray()) {
-                                if (!Character.isDigit(c) && x != 'e') {
+                                if (!Character.isDigit(x) && x != 'e' &&
+                                x != 'E' && x != '-' && x != '+') {
                                     isValid = false;
                                     break;
                                 }
                             }
 
-                            boolean e = !numStr.endsWith("e") || !numStr.endsWith("-") || !numStr.endsWith("+");
-                            if (isOrd && T_count == 1 || (numStr.contains("e+") || numStr.contains("e-")) && E_count == 1 && e && isValid) {
+                            boolean e = !numStr.endsWith("e") && !numStr.endsWith("-") &&
+                                    !numStr.endsWith("+") && !numStr.startsWith("e") &&
+                                    !numStr.contains("-e") && !numStr.contains("+e");
+                            if ((isOrd && T_count == 1) || (isOrd && T_count == 1 && E_count == 1 && e && isValid && Oper_count == 1)
+                                    || E_count == 1 && e && isValid && Oper_count == 1) {
                                 addToken(new Token(TokenType.NUM, numStr));
                             }
                             else {

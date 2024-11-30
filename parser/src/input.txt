@@ -6,6 +6,9 @@
     begin
         if (a != b) {
             x := a + b * c;
+            if (a < 10) {
+                a := a + 1;
+            }
         } else {
             x := a - b / c;
         }
